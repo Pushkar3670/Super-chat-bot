@@ -1,0 +1,100 @@
+const WELCOME=0;
+const NAME=1;
+const  MENU=2;
+const SENTIMENT=3;
+const TEMPERATURE=4;
+const CHOOSE_LANGUAGE=5;
+const TRANSLATE =6;
+const MENU_REASSIGN=7;
+var state = WELCOME;
+var name ="";
+var inputLanguage;
+
+async function getTemperature(cityName){
+    var  result = await CampK12.fetch("GET", "https://api.openweathermap.org/data/2.5/weather?q="+cityName+"&appid=37d99f4c8bd8fa96d4509c54c8a262d7");  
+    var temperature=result.main.temp;
+    var tempInCelsius=temperature-273;
+    tempInCelsius=tempInCelsius.toFixed(2);
+    return tempInCelsius;
+}
+console.log("Say hi or hello to begin!");
+async function respond(inputText){
+    var choice;
+    //console.log(await CampK12.fetch("GET", "http://newsapi.org/v2/top-headlines?country=in&apiKey=19849de3769d4921bf76c3b44a9bf7fe"));
+    inputText=inputText.toLowerCase().trim();
+    if(inputText=="hello" || inputText=="hi"){
+        console.log("Hi ! My name is Lexy, the bot! What is your name?");
+        state=NAME;
+    }
+    else if (inputText=="bye"){
+        console.log("Bye! Have a good day!");
+        state=WELCOME;
+    }
+    else  if(state== NAME || state == MENU_REASSIGN){
+    
+        if(state == NAME){
+            name= inputText;
+        }
+        
+        console.log("Hi "+name+"");
+     console.log("I can do three things for you! ");
+       console.log("1.Predict if you are happy or sad");
+    console.log("2.Tell you the temperature of your city");
+   console.log("3.Translate the sentence you type to your favorite language!");
+   console.log("Say bye to exit!");
+       console.log ("Reply with a number of your choice! ");
+        state=MENU;
+    }
+else if (state==MENU){
+    choice=inputText;
+    choice= parseInt(choice);
+    switch(choice){
+        case 1: console.log("How are you feeling today?");
+                state=SENTIMENT;
+                break;
+        case 2: console.log("Which city are you in currently?");
+                state = TEMPERATURE;
+                break;
+        case 3: console.log("Which language do you want to translate to?");
+                state= CHOOSE_LANGUAGE;
+                break;
+        default : console.log("Invalid Choice. Please reply with a number 1,2,3");
+    }   
+}
+else if (state == SENTIMENT){
+    var senti = await CampK12.getSentimentScore(inputText);
+    if(senti>0.1){
+        console.log("You seem happy today!");
+    }
+    else if(senti<-0.1){
+        console.log("You seem sad today! :(");
+    }
+    else{
+        console.log("Its a normal statement without any sentiment! -_-");
+    }
+    state=MENU_REASSIGN;
+}
+else if(state == TEMPERATURE){
+    var temperature;
+    var city=inputText;
+    temperature=await getTemperature(city);
+    console.log("The current temperature in "+city+" is "+temperature+" °C");
+    state =MENU_REASSIGN;
+}
+else if(state == CHOOSE_LANGUAGE){
+    inputLanguage=inputText;
+    console.log("Please type the sentence you want to translate to "+inputLanguage);
+    state = TRANSLATE;
+}
+else if (state == TRANSLATE){
+    var output = await CampK12.translate(inputText, "English", inputLanguage);
+    console.log("The same sentence in "+inputLanguage+"is :");
+    console.log(output);
+    state = MENU_REASSIGN;
+}
+else {
+    console.log("Bla bla bla!");
+}
+ 
+ 
+}
